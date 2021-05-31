@@ -1,6 +1,9 @@
 import { constants } from "../../shared/constants.js";
+import Media from "../../shared/media.js";
+import PeerBuilder from "../../shared/peerBuilder.js";
 import RoomController from "./utils/RoomController.js";
 import RoomSocketBuilder from "./utils/RoomSocket.js";
+import RoomService from "./utils/service.js";
 import View from "./utils/View.js";
 
 const urlParams = new URLSearchParams(window.location.search);
@@ -18,15 +21,25 @@ const roomInfo = {
   user
 }
 
+const peerBuilder = new PeerBuilder({
+  peerConfig: constants.peerConfig,
+});
+
 const socketBuilder = new RoomSocketBuilder({
   socketUrl: constants.socketUrl,
   namespace: constants.socketNamespaces.room,
 });
 
+const roomService = new RoomService({
+  media: Media,
+});
+
 const dependencies = { 
   socketBuilder, 
   roomInfo, 
-  view: View 
+  view: View, 
+  peerBuilder,
+  roomService,
 };
 
-await RoomController.initialize(dependencies);
+RoomController.initialize(dependencies).catch(err => alert(err.message));

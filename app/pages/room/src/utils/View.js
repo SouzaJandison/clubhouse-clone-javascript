@@ -1,3 +1,4 @@
+import { constants } from "../../../shared/constants.js";
 import Attendee from "../entities/Attendee.js";
 import getTemplate from "../templates/attendeeTemplate.js";
 
@@ -5,6 +6,12 @@ const $imgUser = document.querySelector('#imgUser');
 const $roomTopic = document.querySelector('#pTopic');
 const $gridAttendees = document.querySelector('#gridAttendees');
 const $gridSpeakers = document.querySelector('#gridSpeakers');
+
+const $btnMicrophone = document.querySelector('#btnMicrophone');
+const $btnClipBoard = document.querySelector('#btnClipBoard');
+const $btnClap = document.querySelector('#btnClap');
+const $toggleImage = document.querySelector('#toggleImage');
+const $btnLeave = document.querySelector('#btnLeave');
 
 export default class View {
   static updateUserImage({ img, username }) {
@@ -52,6 +59,75 @@ export default class View {
     }
 
     baseElement.innerHTML += htmlTemplate;
+
+  }
+
+  static showUserFeatures(isSpeaker) {
+    if(!isSpeaker) {
+      $btnClap.classList.remove('hidden');
+      $btnMicrophone.classList.add('hidden');
+      $btnClipBoard.classList.add('hidden');
+      return;
+    }
+
+    $btnClap.classList.add('hidden');
+    $btnMicrophone.classList.remove('hidden');
+    $btnClipBoard.classList.remove('hidden');
+  }
+
+  static _createAudioElement({ muted = true, srcObject }) {
+    const audio = document.createElement('audio');
+    audio.muted = muted;
+    audio.srcObject = srcObject;
+
+    audio.addEventListener('loadedmetadata', async () => {
+      try {
+        await audio.play();
+      } catch (error) {
+        console.log('erro to play', error);
+      }
+    });
+  }
+
+  static renderAudioElement({ stream, isCurrentId }) {
+    this._createAudioElement({
+      muted: isCurrentId,
+      srcObject: stream,
+    });
+  }
+
+  static _onClapClick(command) {
+    return () => {
+      command();
+
+      const basePath = './../../assets/icons/';
+      const handActive = 'hand-solid.svg';
+      const handInactive = 'hand.svg';
+
+      if($toggleImage.src.match(handInactive)) {
+        $toggleImage.src = `${basePath}${handActive}`;
+        return;
+      }
+
+      $toggleImage.src = `${basePath}${handInactive}`;
+    }
+  }
+
+  static configureClapButton(command) {
+    $btnClap.addEventListener('click', this._onClapClick(command));
+  }
+
+  static _redirectToLobby() {
+    window.location = constants.pages.lobby;
+  }
+
+  static configureLeaveButton() {
+    $btnLeave.addEventListener('click', () => {
+      this._redirectToLobby();
+    });
+  }
+
+  static _toggleMicrophoneIcon() {
 
   }
 }

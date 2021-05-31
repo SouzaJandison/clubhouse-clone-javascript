@@ -1,13 +1,61 @@
 import Attendde from "../entities/Attendee.js";
 import Room from '../entities/Room.js'
 import { constants } from "../utils/constants.js";
+import CustomMap from "../utils/customMap.js";
 
 export default class RoomsController {
   #users = new Map();
 
-  constructor() {
-    this.rooms = new Map();
+  constructor({ roomPubSub }) {
+    this.roomPubSub = roomPubSub;
+    this.rooms = new CustomMap({
+      observer: this.#roomObserver(),
+      customMapper: this.#mapRoom.bind(this),
+    });
   }
+
+  #roomObserver() {
+    return {
+      notify: rooms => this.#notifyRoomsSubscribers(rooms),
+    }
+  }
+
+  speakAnswer(socket, { answer, user }) {
+    const userId = user.id;
+    const roomId = user.roomId;
+    const currentUser = this.#users.get(userId);
+    const updateUser = new Attendde({
+      ...currentUser,
+      isSpeaker: answer,
+    });
+
+    this.#users.set(userId, updateUser);
+
+    const room = this.rooms.get(roomId);
+    const userOnRoom = [...room.users.values()].find(({ id }) => id === userId);
+    room.users.delete(userOnRoom);
+    room.users.add(updateUser);
+
+    this.rooms.set(roomId, room);
+
+    socket.emit(constants.events.UPGRADE_USER_PERMISSION, updateUser);
+
+    this.#notifyUserProfileUpgrade(socket, roomId, updateUser);
+  }
+
+  speakRequest(socket) {
+    const userId = socket.id;
+    const user = this.#users.get(userId);
+    const roomId = user.roomId;
+    const owner = this.rooms.get(roomId)?.owner;
+
+    socket.to(owner.id).emit(constants.events.SPEAK_REQUEST, user);
+  }
+
+  #notifyRoomsSubscribers(rooms) {
+    const event = constants.events.LOBBY_UPDATED;
+    this.roomPubSub.emit(event, [...rooms.values()]);
+  } 
 
   onNewConnection(socket) {
     const { id } = socket;
@@ -51,7 +99,6 @@ export default class RoomsController {
   }
 
   #notifyUserProfileUpgrade(socket, roomId, user) {
-    console.log(roomId);
     socket.to(roomId).emit(constants.events.UPGRADE_USER_PERMISSION, user);
   }
 

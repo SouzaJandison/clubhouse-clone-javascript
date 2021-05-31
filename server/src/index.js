@@ -11,7 +11,7 @@ const server = await socketServer.start();
 
 const roomPubSub = new Event()
 
-const roomsControllers = new RoomsController();
+const roomsControllers = new RoomsController({ roomPubSub });
 const lobbyController = new LobbyController({
   activeRooms: roomsControllers.rooms,
   roomsListener: roomPubSub,
