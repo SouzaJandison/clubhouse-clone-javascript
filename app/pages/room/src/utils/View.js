@@ -128,6 +128,28 @@ export default class View {
   }
 
   static _toggleMicrophoneIcon() {
+    const icon = $btnMicrophone.firstElementChild;
+    const classes = [...icon.classList];
 
+    const inactiveMicClass = 'fa-microphone-slash';
+    const activeMicClass = 'fa-microphone';
+
+    const isInactiveMic = classes.includes(inactiveMicClass);
+    
+    if(isInactiveMic) {
+      icon.classList.remove(inactiveMicClass);
+      icon.classList.add(activeMicClass);
+      return;
+    }
+
+    icon.classList.remove(activeMicClass);
+    icon.classList.add(inactiveMicClass);
+  }
+
+  static cofigureOnMicrophoneActivation(command) {
+    $btnMicrophone.addEventListener('click', () => {
+      this._toggleMicrophoneIcon();
+      command();
+    })
   }
 }

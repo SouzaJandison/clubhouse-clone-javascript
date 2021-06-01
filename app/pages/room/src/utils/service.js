@@ -8,6 +8,8 @@ export default class RoomService {
     this.currentUser = {};
     this.currentStream = {};
 
+    this.isAudioActive = true;
+
     this.peers = new Map();
   }
 
@@ -24,6 +26,11 @@ export default class RoomService {
 
   getCurrentUser() {
     return this.currentUser;
+  }
+
+  async toggleAudioActivation() {
+    this.isAudioActive = !this.isAudioActive;
+    this.swithAudioStreamSource({ realAudio: this.isAudioActive });
   }
 
   async upgradeUserPermission(user) {
@@ -56,13 +63,15 @@ export default class RoomService {
     const userAudio = realAudio
       ? await this.media.getUserAudio()
       : this.media.createMediaStreamFake()
-
+    
     this.currentStream = new UserStream({
       isFake: realAudio,
       stream: userAudio,
     });
 
     this.currentUser.isSpeaker = realAudio;
+
+    this._reconnectPeers(this.currentStream.stream);
   }
 
   updateCurrentUserProfile(users) {

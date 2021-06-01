@@ -30,6 +30,7 @@ export default class RoomController {
     this.view.updateRoomTopic(this.roomInfo.room);
     this.view.configureClapButton(this.onClapPressed());
     this.view.configureLeaveButton();
+    this.view.cofigureOnMicrophoneActivation(this.onMicrophoneActivation());
   }
 
   _setupSocket() {
@@ -57,6 +58,12 @@ export default class RoomController {
     return () => {
       this.socket.emit(constants.events.SPEAK_REQUEST, this.roomInfo.user)
     }
+  }
+
+  onMicrophoneActivation() {
+    return async () => {
+      await this.roomService.toggleAudioActivation();
+    };
   }
 
   onPeerError() {
